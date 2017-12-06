@@ -47,6 +47,7 @@ struct Warps : Module {
 		json_t *rootJ = json_object();
 		warps::Parameters *p = modulator.mutable_parameters();
 		json_object_set_new(rootJ, "shape", json_integer(p->carrier_shape));
+		json_object_set_new(rootJ, "mode", json_integer(modulator.feature_mode()));
 		return rootJ;
 	}
 
@@ -55,6 +56,10 @@ struct Warps : Module {
 		warps::Parameters *p = modulator.mutable_parameters();
 		if (shapeJ) {
 			p->carrier_shape = json_integer_value(shapeJ);
+		}
+		json_t *modeJ = json_object_get(rootJ, "mode");
+		if (modeJ) {
+		  modulator.set_feature_mode((warps::FeatureMode)json_integer_value(modeJ));
 		}
 	}
 
