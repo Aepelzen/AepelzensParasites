@@ -1,0 +1,3 @@
+[submodule "stmlib"]
+	path = parasites/stmlib
+  	url = https://github.com/mqtthiqs/stmlib.git
