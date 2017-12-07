@@ -102,7 +102,7 @@ void Warps::step() {
 		p->raw_level[1] = clampf(params[LEVEL2_PARAM].value, 0.0, 1.0);
 
 		p->raw_algorithm_pot = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
-		p->raw_algorithm_cv = clampf(inputs[ALGORITHM_INPUT].value, -5.0,5.0);
+		p->raw_algorithm_cv = clampf(inputs[ALGORITHM_INPUT].value /5.0, -1.0,1.0);
 		p->raw_algorithm = clampf(params[ALGORITHM_PARAM].value /8.0 + inputs[ALGORITHM_INPUT].value /5.0, -1.0, 1.0);
 		
 		{
