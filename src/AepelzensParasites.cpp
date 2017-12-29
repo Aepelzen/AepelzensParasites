@@ -11,5 +11,5 @@ void init(rack::Plugin *p) {
 #endif
 
 	p->addModel(createModel<WarpsWidget>("Aepelzens Parasites", "Warps", "Meta Modulator P", RING_MODULATOR_TAG, WAVESHAPER_TAG));
-	//p->addModel(createModel<TidesWidget>("Aepelzens Parasites", "Tides", "Tides P", RING_MODULATOR_TAG, WAVESHAPER_TAG));
+	p->addModel(createModel<TidesWidget>("Aepelzens Parasites", "Tides", "Tides P", RING_MODULATOR_TAG, WAVESHAPER_TAG));
 }
