@@ -79,6 +79,9 @@ struct Tides : Module {
 	}
 
 	void fromJson(json_t *rootJ) override {
+		json_t *featModeJ = json_object_get(rootJ, "featureMode");
+		if(featModeJ)
+		    generator.feature_mode_ = (tides::Generator::FeatureMode) json_integer_value(featModeJ);
 		json_t *modeJ = json_object_get(rootJ, "mode");
 		if (modeJ) {
 			generator.set_mode((tides::GeneratorMode) json_integer_value(modeJ));
@@ -93,9 +96,6 @@ struct Tides : Module {
 		if (sheepJ) {
 			sheep = json_boolean_value(sheepJ);
 		}
-		json_t *featModeJ = json_object_get(rootJ, "featureMode");
-		if(featModeJ)
-		    generator.feature_mode_ = (tides::Generator::FeatureMode) json_integer_value(featModeJ);
 	}
 };
 
