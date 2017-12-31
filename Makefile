@@ -1,8 +1,7 @@
 FLAGS += \
-	-DTEST -DPARASITES\
+	-DTEST -DPARASITES \
 	-I./parasites \
 	-Wno-unused-local-typedefs
-#-O0 -g
 
 SOURCES += $(wildcard src/*.cpp)
 SOURCES += parasites/stmlib/utils/random.cc

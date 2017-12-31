@@ -125,8 +125,6 @@ void Tides::step() {
 	lights[RANGE_RED_LIGHT].value = (range == 0) ? 1.0 : 0.0;
 
 	//Buffer loop
-	// if (++frame >= 16) {
-	// 	frame = 0;
 	if (generator.writable_block()) {
 		// Pitch
 		float pitch = params[FREQUENCY_PARAM].value;
@@ -136,20 +134,20 @@ void Tides::step() {
 		
 		pitch += 60.0;
 		if (generator.feature_mode_ == tides::Generator::FEAT_MODE_HARMONIC) {
+		    //this is probably not original but seems useful
 		    pitch -= 12;
 		    // Scale to the global sample rate
 		    pitch += log2f(48000.0 / engineGetSampleRate()) * 12.0;
 		    generator.set_pitch_high_range(clampf(pitch * 0x80, -0x8000, 0x7fff), fm);
 		}
 		else {
-		//TODO: fm
 		    pitch += log2f(48000.0 / engineGetSampleRate()) * 12.0;
 		    generator.set_pitch(clampf(pitch * 0x80, -0x8000, 0x7fff),fm);
 		}
 
 		if (generator.feature_mode_ == tides::Generator::FEAT_MODE_RANDOM) {
 		    //TODO: should this be inverted?
-		    generator.set_pulse_width(clampf(params[FM_PARAM].value /12.0 + 1.0, 0.0, 2.0) * 0x7fff);
+		    generator.set_pulse_width(clampf(1.0 - params[FM_PARAM].value /12.0, 0.0, 2.0) * 0x7fff);
 		}
 		
 		// Slope, smoothness, pitch
@@ -164,9 +162,10 @@ void Tides::step() {
 		// Slight deviation from spec here.
 		// Instead of toggling sync by holding the range button, just enable it if the clock port is plugged in.
 		generator.set_sync(inputs[CLOCK_INPUT].active);	
-		// Generator
 		generator.FillBuffer();
-		//generator.Process(sheep);
+#ifdef WAVETABLE_HACK
+		generator.Process(sheep);
+#endif
 	}
 
 	// Level
@@ -222,12 +221,6 @@ TidesWidget::TidesWidget() {
 		tidesPanel->box.size = box.size;
 		addChild(tidesPanel);
 	}
-	{
-		sheepPanel = new LightPanel();
-		sheepPanel->backgroundImage = Image::load(assetPlugin(plugin, "res/Sheep.png"));
-		sheepPanel->box.size = box.size;
-		addChild(sheepPanel);
-	}
 
 	addChild(createScrew<ScrewSilver>(Vec(15, 0)));
 	addChild(createScrew<ScrewSilver>(Vec(180, 0)));
@@ -265,17 +258,6 @@ TidesWidget::TidesWidget() {
 	addChild(createLight<MediumLight<GreenRedLight>>(Vec(57, 102), module, Tides::RANGE_GREEN_LIGHT));
 }
 
-void TidesWidget::step() {
-	Tides *tides = dynamic_cast<Tides*>(module);
-	assert(tides);
-
-	tidesPanel->visible = !tides->sheep;
-	sheepPanel->visible = tides->sheep;
-
-	ModuleWidget::step();
-}
-
-
 struct TidesSheepItem : MenuItem {
 	Tides *tides;
 	void onAction(EventAction &e) override {
@@ -307,9 +289,10 @@ Menu *TidesWidget::createContextMenu() {
 	Tides *tides = dynamic_cast<Tides*>(module);
 	assert(tides);
 
+#ifdef WAVETABLE_HACK	
 	menu->addChild(construct<MenuEntry>());
 	menu->addChild(construct<TidesSheepItem>(&MenuEntry::text, "Sheep", &TidesSheepItem::tides, tides));
-
+#endif
 	menu->addChild(construct<MenuLabel>());
 	menu->addChild(construct<MenuLabel>(&MenuEntry::text, "Mode"));
 	menu->addChild(construct<TidesModeItem>(&MenuEntry::text, "Original", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_FUNCTION));

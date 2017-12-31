@@ -12,9 +12,7 @@ extern Plugin *plugin;
 
 struct TidesWidget : ModuleWidget {
 	Panel *tidesPanel;
-	Panel *sheepPanel;
 	TidesWidget();
-	void step() override;
 	Menu *createContextMenu() override;
 };
 
