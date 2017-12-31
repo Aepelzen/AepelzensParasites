@@ -2,6 +2,7 @@
 #include "AepelzensParasites.hpp"
 #include "dsp/digital.hpp"
 #include "warps/dsp/modulator.h"
+#include "warps/resources.h"
 
 
 struct Warps : Module {
@@ -101,10 +102,14 @@ void Warps::step() {
 		p->raw_level[0] = clampf(params[LEVEL1_PARAM].value, 0.0, 1.0);
 		p->raw_level[1] = clampf(params[LEVEL2_PARAM].value, 0.0, 1.0);
 
-		p->raw_algorithm_pot = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
-		p->raw_algorithm_cv = clampf(inputs[ALGORITHM_INPUT].value /5.0, -1.0,1.0);
-		p->raw_algorithm = clampf(params[ALGORITHM_PARAM].value /8.0 + inputs[ALGORITHM_INPUT].value /5.0, -1.0, 1.0);
+		//p->raw_algorithm_pot = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
+		float val = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
+		val = stmlib::Interpolate(warps::lut_pot_curve, val, 512.0f);
+		p->raw_algorithm_pot = val;
 		
+		p->raw_algorithm_cv = clampf(inputs[ALGORITHM_INPUT].value /5.0, -1.0,1.0);
+		//According to the cv-scaler this does not seem to use the plot curve
+		p->raw_algorithm = clampf(params[ALGORITHM_PARAM].value /8.0 + inputs[ALGORITHM_INPUT].value /5.0, 0.0, 1.0);
 		{
 			// TODO
 			// Use the correct light color
