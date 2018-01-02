@@ -217,7 +217,7 @@ TidesWidget::TidesWidget() {
 
 	{
 		tidesPanel = new LightPanel();
-		tidesPanel->backgroundImage = Image::load(assetPlugin(plugin, "res/Tides.png"));
+		tidesPanel->backgroundImage = Image::load(assetPlugin(plugin, "res/Cycles.png"));
 		tidesPanel->box.size = box.size;
 		addChild(tidesPanel);
 	}

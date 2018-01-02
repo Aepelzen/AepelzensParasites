@@ -144,7 +144,7 @@ WarpsWidget::WarpsWidget() {
 
 	{
 		Panel *panel = new LightPanel();
-		panel->backgroundImage = Image::load(assetPlugin(plugin, "res/Warps.png"));
+		panel->backgroundImage = Image::load(assetPlugin(plugin, "res/Wasp.png"));
 		panel->box.size = box.size;
 		addChild(panel);
 	}

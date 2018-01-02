@@ -10,6 +10,6 @@ void init(rack::Plugin *p) {
 	p->version = TOSTRING(VERSION);
 #endif
 
-	p->addModel(createModel<WarpsWidget>("Aepelzens Parasites", "Warps", "Meta Modulator P", RING_MODULATOR_TAG, WAVESHAPER_TAG));
-	p->addModel(createModel<TidesWidget>("Aepelzens Parasites", "Tides", "Tides P", RING_MODULATOR_TAG, WAVESHAPER_TAG));
+	p->addModel(createModel<WarpsWidget>("Aepelzens Parasites", "Warps", "Wasp", RING_MODULATOR_TAG, WAVESHAPER_TAG));
+	p->addModel(createModel<TidesWidget>("Aepelzens Parasites", "Tides", "Cycles", LFO_TAG, OSCILLATOR_TAG, WAVESHAPER_TAG, FUNCTION_GENERATOR_TAG, RANDOM_TAG));
 }
