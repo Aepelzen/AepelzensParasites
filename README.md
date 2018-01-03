@@ -13,12 +13,14 @@ be found [here](https://mqtthiqs.github.io/parasites/index.html).
 The latest update renames the modules to comply with some copyright restrictions that i wasn't
 aware of before. I kept the identifiers though so this should not break any saves.
 
-## Wasp (based on Warps Parasite)
+## Wasp and Tapeworm (based on Warps Parasite)
 
-This is a work in progress. Currently there are problems with various modes when using
-multiple instances (at least the frequency shifter and delay). These happen because the parasites
-firmware uses static variables. You can still use multiple instances as long as only one is set to
-delay and frequency shifter.
+These two modules are based on the Warps Parasite. To fix the multiple-instance problem from older
+versions i took the delay code of the parasites firmware and split it out into it's own module,
+Tapeworm. Wasp contains all the other modes except for the Doppler Panner which is disabled by
+default. You can enable it by adding "-DDOPPLER_PANNER" to the build flags but you can still
+only use one instance (that is set to Doppler mode).
+
 
 ## Cycles (based on Tides Parasite)
 
