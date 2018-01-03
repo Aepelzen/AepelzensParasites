@@ -20,3 +20,7 @@ struct WarpsWidget : ModuleWidget {
 	WarpsWidget();
 	Menu *createContextMenu() override;
 };
+
+struct TapewormWidget : ModuleWidget {
+	TapewormWidget();
+};
