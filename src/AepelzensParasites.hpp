@@ -6,21 +6,6 @@ using namespace rack;
 
 extern Plugin *plugin;
 
-////////////////////
-// module widgets
-////////////////////
-
-struct TidesWidget : ModuleWidget {
-	Panel *tidesPanel;
-	TidesWidget();
-	Menu *createContextMenu() override;
-};
-
-struct WarpsWidget : ModuleWidget {
-	WarpsWidget();
-	Menu *createContextMenu() override;
-};
-
-struct TapewormWidget : ModuleWidget {
-	TapewormWidget();
-};
+extern Model *modelWarps;
+extern Model *modelTapeworm;
+extern Model *modelTides;

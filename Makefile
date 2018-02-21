@@ -1,3 +1,6 @@
+SLUG = "Aepelzens Parasites"
+VERSION = 0.6.0dev
+
 FLAGS += \
 	-DTEST -DPARASITES \
 	-I./parasites \
@@ -15,12 +18,7 @@ SOURCES += parasites/warps/resources.cc
 SOURCES += parasites/tides/generator.cc
 SOURCES += parasites/tides/resources.cc
 
-include ../../plugin.mk
+DISTRIBUTABLES += $(wildcard LICENSE*) res
 
-
-dist: all
-	mkdir -p dist/AepelzensParasites
-	cp LICENSE* dist/AepelzensParasites/
-	cp $(TARGET) dist/AepelzensParasites/
-	cp -R res dist/AepelzensParasites/
-	cd dist && zip -5 -r AepelzensParasites-$(VERSION)-$(ARCH).zip AepelzensParasites
+RACK_DIR ?= ../..
+include $(RACK_DIR)/plugin.mk
