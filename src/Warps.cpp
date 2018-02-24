@@ -201,19 +201,19 @@ Menu *WarpsWidget::createContextMenu() {
 	Warps *module = dynamic_cast<Warps*>(this->module);
 
 	menu->addChild(construct<MenuLabel>());
-	menu->addChild(construct<MenuLabel>(&MenuEntry::text, "Mode"));
+	menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Mode"));
 
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Meta", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_META));
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Fold", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_FOLD));
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Chebyschev", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_CHEBYSCHEV));
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Frequency Shifter", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_FREQUENCY_SHIFTER));
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Bitcrusher", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_BITCRUSHER));
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Comparator", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_COMPARATOR));
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Vocoder", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_VOCODER));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Meta", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_META));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Fold", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_FOLD));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Chebyschev", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_CHEBYSCHEV));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Frequency Shifter", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_FREQUENCY_SHIFTER));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Bitcrusher", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_BITCRUSHER));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Comparator", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_COMPARATOR));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Vocoder", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_VOCODER));
 #ifdef DOPPLER_PANNER
-	menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Doppler", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_DOPPLER));
+	menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Doppler", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_DOPPLER));
 #endif
-	//menu->addChild(construct<WarpsModeItem>(&MenuEntry::text, "Delay", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_DELAY));
+	//menu->addChild(construct<WarpsModeItem>(&WarpsModeItem::text, "Delay", &WarpsModeItem::module, module, &WarpsModeItem::mode, warps::FEATURE_MODE_DELAY));
 	return menu;
 }
 

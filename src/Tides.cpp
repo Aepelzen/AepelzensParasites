@@ -131,7 +131,7 @@ void Tides::step() {
 		pitch += 12.0 * inputs[PITCH_INPUT].value;
 		//pitch += params[FM_PARAM].value * inputs[FM_INPUT].normalize(0.1) / 5.0;
 		float fm = clampf(inputs[FM_INPUT].value /5.0 * params[FM_PARAM].value /12.0, -1.0, 1.0) * 0x600;
-		
+
 		pitch += 60.0;
 		if (generator.feature_mode_ == tides::Generator::FEAT_MODE_HARMONIC) {
 		    //this is probably not original but seems useful
@@ -149,7 +149,7 @@ void Tides::step() {
 		    //TODO: should this be inverted?
 		    generator.set_pulse_width(clampf(1.0 - params[FM_PARAM].value /12.0, 0.0, 2.0) * 0x7fff);
 		}
-		
+
 		// Slope, smoothness, pitch
 		int16_t shape = clampf(params[SHAPE_PARAM].value + inputs[SHAPE_INPUT].value / 5.0, -1.0, 1.0) * 0x7fff;
 		int16_t slope = clampf(params[SLOPE_PARAM].value + inputs[SLOPE_INPUT].value / 5.0, -1.0, 1.0) * 0x7fff;
@@ -161,7 +161,7 @@ void Tides::step() {
 		// Sync
 		// Slight deviation from spec here.
 		// Instead of toggling sync by holding the range button, just enable it if the clock port is plugged in.
-		generator.set_sync(inputs[CLOCK_INPUT].active);	
+		generator.set_sync(inputs[CLOCK_INPUT].active);
 		generator.FillBuffer();
 #ifdef WAVETABLE_HACK
 		generator.Process(sheep);
@@ -189,7 +189,7 @@ void Tides::step() {
 	lastGate = gate;
 
 	const tides::GeneratorSample& sample = generator.Process(gate);
-	
+
 	uint32_t uni = sample.unipolar;
 	int32_t bi = sample.bipolar;
 
@@ -293,15 +293,15 @@ Menu *TidesWidget::createContextMenu() {
 	Tides *tides = dynamic_cast<Tides*>(module);
 	assert(tides);
 
-#ifdef WAVETABLE_HACK	
+#ifdef WAVETABLE_HACK
 	menu->addChild(construct<MenuEntry>());
 	menu->addChild(construct<TidesSheepItem>(&MenuEntry::text, "Sheep", &TidesSheepItem::tides, tides));
 #endif
 	menu->addChild(construct<MenuLabel>());
-	menu->addChild(construct<MenuLabel>(&MenuEntry::text, "Mode"));
-	menu->addChild(construct<TidesModeItem>(&MenuEntry::text, "Original", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_FUNCTION));
-	menu->addChild(construct<TidesModeItem>(&MenuEntry::text, "Harmonic", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_HARMONIC));
-	menu->addChild(construct<TidesModeItem>(&MenuEntry::text, "Random", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_RANDOM));
+	menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Mode"));
+	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Original", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_FUNCTION));
+	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Harmonic", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_HARMONIC));
+	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Random", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_RANDOM));
 	return menu;
 }
 
