@@ -131,7 +131,7 @@ void Tides::step() {
 		pitch += 12.0 * inputs[PITCH_INPUT].value;
 		//pitch += params[FM_PARAM].value * inputs[FM_INPUT].normalize(0.1) / 5.0;
 		float fm = clampf(inputs[FM_INPUT].value /5.0 * params[FM_PARAM].value /12.0, -1.0, 1.0) * 0x600;
-		
+
 		pitch += 60.0;
 		if (generator.feature_mode_ == tides::Generator::FEAT_MODE_HARMONIC) {
 		    //this is probably not original but seems useful
@@ -149,7 +149,7 @@ void Tides::step() {
 		    //TODO: should this be inverted?
 		    generator.set_pulse_width(clampf(1.0 - params[FM_PARAM].value /12.0, 0.0, 2.0) * 0x7fff);
 		}
-		
+
 		// Slope, smoothness, pitch
 		int16_t shape = clampf(params[SHAPE_PARAM].value + inputs[SHAPE_INPUT].value / 5.0, -1.0, 1.0) * 0x7fff;
 		int16_t slope = clampf(params[SLOPE_PARAM].value + inputs[SLOPE_INPUT].value / 5.0, -1.0, 1.0) * 0x7fff;
@@ -161,7 +161,7 @@ void Tides::step() {
 		// Sync
 		// Slight deviation from spec here.
 		// Instead of toggling sync by holding the range button, just enable it if the clock port is plugged in.
-		generator.set_sync(inputs[CLOCK_INPUT].active);	
+		generator.set_sync(inputs[CLOCK_INPUT].active);
 		generator.FillBuffer();
 #ifdef WAVETABLE_HACK
 		generator.Process(sheep);
@@ -189,7 +189,7 @@ void Tides::step() {
 	lastGate = gate;
 
 	const tides::GeneratorSample& sample = generator.Process(gate);
-	
+
 	uint32_t uni = sample.unipolar;
 	int32_t bi = sample.bipolar;
 
@@ -210,9 +210,13 @@ void Tides::step() {
 }
 
 
-TidesWidget::TidesWidget() {
-	Tides *module = new Tides();
-	setModule(module);
+struct TidesWidget : ModuleWidget {
+	Panel *tidesPanel;
+	TidesWidget(Tides *module);
+	Menu *createContextMenu() override;
+};
+
+TidesWidget::TidesWidget(Tides *module) : ModuleWidget(module) {
 	box.size = Vec(15 * 14, 380);
 
 	{
@@ -222,40 +226,40 @@ TidesWidget::TidesWidget() {
 		addChild(tidesPanel);
 	}
 
-	addChild(createScrew<ScrewSilver>(Vec(15, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(180, 0)));
-	addChild(createScrew<ScrewSilver>(Vec(15, 365)));
-	addChild(createScrew<ScrewSilver>(Vec(180, 365)));
+	addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(180, 0)));
+	addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
+	addChild(Widget::create<ScrewSilver>(Vec(180, 365)));
 
-	addParam(createParam<CKD6>(Vec(20, 52), module, Tides::MODE_PARAM, 0.0, 1.0, 0.0));
-	addParam(createParam<CKD6>(Vec(20, 93), module, Tides::RANGE_PARAM, 0.0, 1.0, 0.0));
+	addParam(ParamWidget::create<CKD6>(Vec(20, 52), module, Tides::MODE_PARAM, 0.0, 1.0, 0.0));
+	addParam(ParamWidget::create<CKD6>(Vec(20, 93), module, Tides::RANGE_PARAM, 0.0, 1.0, 0.0));
 
-	addParam(createParam<Rogan3PSGreen>(Vec(78, 60), module, Tides::FREQUENCY_PARAM, -48.0, 48.0, 0.0));
-	addParam(createParam<Rogan1PSGreen>(Vec(156, 66), module, Tides::FM_PARAM, -12.0, 12.0, 0.0));
+	addParam(ParamWidget::create<Rogan3PSGreen>(Vec(78, 60), module, Tides::FREQUENCY_PARAM, -48.0, 48.0, 0.0));
+	addParam(ParamWidget::create<Rogan1PSGreen>(Vec(156, 66), module, Tides::FM_PARAM, -12.0, 12.0, 0.0));
 
-	addParam(createParam<Rogan1PSWhite>(Vec(13, 155), module, Tides::SHAPE_PARAM, -1.0, 1.0, 0.0));
-	addParam(createParam<Rogan1PSWhite>(Vec(85, 155), module, Tides::SLOPE_PARAM, -1.0, 1.0, 0.0));
-	addParam(createParam<Rogan1PSWhite>(Vec(156, 155), module, Tides::SMOOTHNESS_PARAM, -1.0, 1.0, 0.0));
+	addParam(ParamWidget::create<Rogan1PSWhite>(Vec(13, 155), module, Tides::SHAPE_PARAM, -1.0, 1.0, 0.0));
+	addParam(ParamWidget::create<Rogan1PSWhite>(Vec(85, 155), module, Tides::SLOPE_PARAM, -1.0, 1.0, 0.0));
+	addParam(ParamWidget::create<Rogan1PSWhite>(Vec(156, 155), module, Tides::SMOOTHNESS_PARAM, -1.0, 1.0, 0.0));
 
-	addInput(createInput<PJ301MPort>(Vec(21, 219), module, Tides::SHAPE_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(93, 219), module, Tides::SLOPE_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(164, 219), module, Tides::SMOOTHNESS_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(21, 219), Port::INPUT, module, Tides::SHAPE_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(93, 219), Port::INPUT, module, Tides::SLOPE_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(164, 219), Port::INPUT, module, Tides::SMOOTHNESS_INPUT));
 
-	addInput(createInput<PJ301MPort>(Vec(21, 274), module, Tides::TRIG_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(57, 274), module, Tides::FREEZE_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(93, 274), module, Tides::PITCH_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(128, 274), module, Tides::FM_INPUT));
-	addInput(createInput<PJ301MPort>(Vec(164, 274), module, Tides::LEVEL_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(21, 274), Port::INPUT, module, Tides::TRIG_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(57, 274), Port::INPUT, module, Tides::FREEZE_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(93, 274), Port::INPUT, module, Tides::PITCH_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(128, 274), Port::INPUT, module, Tides::FM_INPUT));
+	addInput(Port::create<PJ301MPort>(Vec(164, 274), Port::INPUT, module, Tides::LEVEL_INPUT));
 
-	addInput(createInput<PJ301MPort>(Vec(21, 316), module, Tides::CLOCK_INPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(57, 316), module, Tides::HIGH_OUTPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(93, 316), module, Tides::LOW_OUTPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(128, 316), module, Tides::UNI_OUTPUT));
-	addOutput(createOutput<PJ301MPort>(Vec(164, 316), module, Tides::BI_OUTPUT));
+	addInput(Port::create<PJ301MPort>(Vec(21, 316), Port::INPUT, module, Tides::CLOCK_INPUT));
+	addOutput(Port::create<PJ301MPort>(Vec(57, 316), Port::OUTPUT, module, Tides::HIGH_OUTPUT));
+	addOutput(Port::create<PJ301MPort>(Vec(93, 316), Port::OUTPUT, module, Tides::LOW_OUTPUT));
+	addOutput(Port::create<PJ301MPort>(Vec(128, 316), Port::OUTPUT, module, Tides::UNI_OUTPUT));
+	addOutput(Port::create<PJ301MPort>(Vec(164, 316), Port::OUTPUT, module, Tides::BI_OUTPUT));
 
-	addChild(createLight<MediumLight<GreenRedLight>>(Vec(57, 61), module, Tides::MODE_GREEN_LIGHT));
-	addChild(createLight<MediumLight<GreenRedLight>>(Vec(57, 82), module, Tides::PHASE_GREEN_LIGHT));
-	addChild(createLight<MediumLight<GreenRedLight>>(Vec(57, 102), module, Tides::RANGE_GREEN_LIGHT));
+	addChild(ModuleLightWidget::create<MediumLight<GreenRedLight>>(Vec(57, 61), module, Tides::MODE_GREEN_LIGHT));
+	addChild(ModuleLightWidget::create<MediumLight<GreenRedLight>>(Vec(57, 82), module, Tides::PHASE_GREEN_LIGHT));
+	addChild(ModuleLightWidget::create<MediumLight<GreenRedLight>>(Vec(57, 102), module, Tides::RANGE_GREEN_LIGHT));
 }
 
 struct TidesSheepItem : MenuItem {
@@ -289,14 +293,16 @@ Menu *TidesWidget::createContextMenu() {
 	Tides *tides = dynamic_cast<Tides*>(module);
 	assert(tides);
 
-#ifdef WAVETABLE_HACK	
+#ifdef WAVETABLE_HACK
 	menu->addChild(construct<MenuEntry>());
 	menu->addChild(construct<TidesSheepItem>(&MenuEntry::text, "Sheep", &TidesSheepItem::tides, tides));
 #endif
 	menu->addChild(construct<MenuLabel>());
-	menu->addChild(construct<MenuLabel>(&MenuEntry::text, "Mode"));
-	menu->addChild(construct<TidesModeItem>(&MenuEntry::text, "Original", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_FUNCTION));
-	menu->addChild(construct<TidesModeItem>(&MenuEntry::text, "Harmonic", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_HARMONIC));
-	menu->addChild(construct<TidesModeItem>(&MenuEntry::text, "Random", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_RANDOM));
+	menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Mode"));
+	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Original", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_FUNCTION));
+	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Harmonic", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_HARMONIC));
+	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Random", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_RANDOM));
 	return menu;
 }
+
+Model *modelTides = Model::create<Tides, TidesWidget>("Aepelzens Parasites", "Tides", "Cycles", LFO_TAG, OSCILLATOR_TAG, WAVESHAPER_TAG, FUNCTION_GENERATOR_TAG, RANDOM_TAG);

@@ -6,7 +6,7 @@
 #include "warps/resources.h"
 #include "warps/dsp/parameters.h"
 
-struct Tapeworm : Module {    
+struct Tapeworm : Module {
     enum ParamIds {
 	ALGORITHM_PARAM,
 	TIMBRE_PARAM,
@@ -46,7 +46,7 @@ struct Tapeworm : Module {
     static const size_t kOversampling = 6;
     //static const size_t kLessOversampling = 4;
     stmlib::OnePole filter_[4];
-    
+
     warps::Parameters parameters_;
     warps::Parameters previous_parameters_;
 
@@ -57,9 +57,9 @@ struct Tapeworm : Module {
 
     float lp_time = 0.0f;
     float lp_rate;
-    
+
     /* everything that follows will be used as delay buffer */
-    warps::ShortFrame delay_buffer_[8192+4096];  
+    warps::ShortFrame delay_buffer_[8192+4096];
     float internal_modulation_[kMaxBlockSize];
     float buffer_[3][kMaxBlockSize];
     float src_buffer_[2][kMaxBlockSize * kOversampling];
@@ -111,7 +111,6 @@ struct Tapeworm : Module {
 Tapeworm::Tapeworm() : Module(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS) {
     // memset(&modulator, 0, sizeof(modulator));
     // modulator.Init(96000.0f);
-    stateTrigger.setThresholds(0.0, 1.0);
     delay_interpolation_ = INTERPOLATION_HERMITE;
 }
 
@@ -353,12 +352,12 @@ void Tapeworm::step() {
 	    p->raw_level[0] *= clampf(inputs[LEVEL1_INPUT].value/5.0, 0.0, 1.0);
 	if(inputs[LEVEL2_INPUT].active)
 	    p->raw_level[1] *= clampf(inputs[LEVEL2_INPUT].value/5.0, 0.0, 1.0);
-	
+
 	//p->raw_algorithm_pot = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
 	// float val = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
 	// val = stmlib::Interpolate(warps::lut_pot_curve, val, 512.0f);
 	// p->raw_algorithm_pot = val;
-		
+
 	//p->raw_algorithm_cv = clampf(inputs[ALGORITHM_INPUT].value /5.0, -1.0,1.0);
 	//According to the cv-scaler this does not seem to use the plot curve
 	p->raw_algorithm = clampf(params[ALGORITHM_PARAM].value /8.0 + inputs[ALGORITHM_INPUT].value /5.0, 0.0, 1.0);
@@ -382,9 +381,11 @@ void Tapeworm::step() {
 }
 
 
-TapewormWidget::TapewormWidget() {
-    Tapeworm *module = new Tapeworm();
-    setModule(module);
+struct TapewormWidget : ModuleWidget {
+	TapewormWidget(Tapeworm *module);
+};
+
+TapewormWidget::TapewormWidget(Tapeworm *module) : ModuleWidget(module) {
     box.size = Vec(15*10, 380);
 
     {
@@ -394,34 +395,36 @@ TapewormWidget::TapewormWidget() {
 	addChild(panel);
     }
 
-    addChild(createScrew<ScrewSilver>(Vec(15, 0)));
-    addChild(createScrew<ScrewSilver>(Vec(120, 0)));
-    addChild(createScrew<ScrewSilver>(Vec(15, 365)));
-    addChild(createScrew<ScrewSilver>(Vec(120, 365)));
+    addChild(Widget::create<ScrewSilver>(Vec(15, 0)));
+    addChild(Widget::create<ScrewSilver>(Vec(120, 0)));
+    addChild(Widget::create<ScrewSilver>(Vec(15, 365)));
+    addChild(Widget::create<ScrewSilver>(Vec(120, 365)));
 
-    addParam(createParam<Rogan6PSWhite>(Vec(29, 52), module, Tapeworm::ALGORITHM_PARAM, 0.0, 8.0, 0.0));
+    addParam(ParamWidget::create<Rogan6PSWhite>(Vec(29, 52), module, Tapeworm::ALGORITHM_PARAM, 0.0, 8.0, 0.0));
 
-    addParam(createParam<Rogan1PSWhite>(Vec(94, 173), module, Tapeworm::TIMBRE_PARAM, 0.0, 1.0, 0.5));
-    addParam(createParam<TL1105>(Vec(16, 182), module, Tapeworm::STATE_PARAM, 0.0, 1.0, 0.0));
-    addParam(createParam<Trimpot>(Vec(14, 213), module, Tapeworm::LEVEL1_PARAM, 0.0, 1.0, 1.0));
-    addParam(createParam<Trimpot>(Vec(53, 213), module, Tapeworm::LEVEL2_PARAM, 0.0, 1.0, 1.0));
+    addParam(ParamWidget::create<Rogan1PSWhite>(Vec(94, 173), module, Tapeworm::TIMBRE_PARAM, 0.0, 1.0, 0.5));
+    addParam(ParamWidget::create<TL1105>(Vec(16, 182), module, Tapeworm::STATE_PARAM, 0.0, 1.0, 0.0));
+    addParam(ParamWidget::create<Trimpot>(Vec(14, 213), module, Tapeworm::LEVEL1_PARAM, 0.0, 1.0, 1.0));
+    addParam(ParamWidget::create<Trimpot>(Vec(53, 213), module, Tapeworm::LEVEL2_PARAM, 0.0, 1.0, 1.0));
 
-    addInput(createInput<PJ301MPort>(Vec(8, 273), module, Tapeworm::LEVEL1_INPUT));
-    addInput(createInput<PJ301MPort>(Vec(44, 273), module, Tapeworm::LEVEL2_INPUT));
-    addInput(createInput<PJ301MPort>(Vec(80, 273), module, Tapeworm::ALGORITHM_INPUT));
-    addInput(createInput<PJ301MPort>(Vec(116, 273), module, Tapeworm::TIMBRE_INPUT));
+    addInput(Port::create<PJ301MPort>(Vec(8, 273), Port::INPUT, module, Tapeworm::LEVEL1_INPUT));
+    addInput(Port::create<PJ301MPort>(Vec(44, 273), Port::INPUT, module, Tapeworm::LEVEL2_INPUT));
+    addInput(Port::create<PJ301MPort>(Vec(80, 273), Port::INPUT, module, Tapeworm::ALGORITHM_INPUT));
+    addInput(Port::create<PJ301MPort>(Vec(116, 273), Port::INPUT, module, Tapeworm::TIMBRE_INPUT));
 
-    addInput(createInput<PJ301MPort>(Vec(8, 316), module, Tapeworm::CARRIER_INPUT));
-    addInput(createInput<PJ301MPort>(Vec(44, 316), module, Tapeworm::MODULATOR_INPUT));
-    addOutput(createOutput<PJ301MPort>(Vec(80, 316), module, Tapeworm::MODULATOR_OUTPUT));
-    addOutput(createOutput<PJ301MPort>(Vec(116, 316), module, Tapeworm::AUX_OUTPUT));
+    addInput(Port::create<PJ301MPort>(Vec(8, 316), Port::INPUT, module, Tapeworm::CARRIER_INPUT));
+    addInput(Port::create<PJ301MPort>(Vec(44, 316), Port::INPUT, module, Tapeworm::MODULATOR_INPUT));
+    addOutput(Port::create<PJ301MPort>(Vec(80, 316), Port::OUTPUT, module, Tapeworm::MODULATOR_OUTPUT));
+    addOutput(Port::create<PJ301MPort>(Vec(116, 316), Port::OUTPUT, module, Tapeworm::AUX_OUTPUT));
 
-    addChild(createLight<SmallLight<GreenRedLight>>(Vec(20, 167), module, Tapeworm::CARRIER_GREEN_LIGHT));
+    addChild(ModuleLightWidget::create<SmallLight<GreenRedLight>>(Vec(20, 167), module, Tapeworm::CARRIER_GREEN_LIGHT));
 
     struct AlgorithmLight : RedGreenBlueLight {
 	AlgorithmLight() {
 	    box.size = Vec(71, 71);
 	}
     };
-    addChild(createLight<AlgorithmLight>(Vec(40, 63), module, Tapeworm::ALGORITHM_LIGHT));
+    addChild(ModuleLightWidget::create<AlgorithmLight>(Vec(40, 63), module, Tapeworm::ALGORITHM_LIGHT));
 }
+
+Model *modelTapeworm = Model::create<Tapeworm, TapewormWidget>("Aepelzens Parasites", "Tapeworm", "Tapeworm", EFFECT_TAG,DELAY_TAG);
