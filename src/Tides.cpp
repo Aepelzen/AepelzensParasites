@@ -3,6 +3,7 @@
 #include "dsp/samplerate.hpp"
 #include "dsp/digital.hpp"
 #include "tides/generator.h"
+#include "tides/cv_scaler.h"
 
 struct Tides : Module {
 	enum ParamIds {
@@ -45,8 +46,10 @@ struct Tides : Module {
 		NUM_LIGHTS
 	};
 
+	const int16_t kOctave = 12 * 128;
 	bool sheep;
 	tides::Generator generator;
+	uint8_t quantize = 0;
 	int frame = 0;
 	uint8_t lastGate;
 	SchmittTrigger modeTrigger;
@@ -74,6 +77,7 @@ struct Tides : Module {
 		json_object_set_new(rootJ, "range", json_integer((int) generator.range()));
 		json_object_set_new(rootJ, "sheep", json_boolean(sheep));
 		json_object_set_new(rootJ, "featureMode", json_integer((int)generator.feature_mode_));
+		json_object_set_new(rootJ, "QuantizerMode", json_integer(quantize));
 
 		return rootJ;
 	}
@@ -96,6 +100,11 @@ struct Tides : Module {
 		if (sheepJ) {
 			sheep = json_boolean_value(sheepJ);
 		}
+		json_t *quantizerJ = json_object_get(rootJ, "QuantizerMode");
+		if (quantizerJ) {
+			quantize = json_integer_value(quantizerJ);
+		}
+
 	}
 };
 
@@ -127,33 +136,43 @@ void Tides::step() {
 	//Buffer loop
 	if (generator.writable_block()) {
 		// Pitch
-		float pitch = params[FREQUENCY_PARAM].value;
-		pitch += 12.0 * inputs[PITCH_INPUT].value;
-		//pitch += params[FM_PARAM].value * inputs[FM_INPUT].normalize(0.1) / 5.0;
-		float fm = clampf(inputs[FM_INPUT].value /5.0 * params[FM_PARAM].value /12.0, -1.0, 1.0) * 0x600;
+		float pitchParam = clamp(params[FREQUENCY_PARAM].value + inputs[PITCH_INPUT].value * 12.0f, -60.0f, 60.0f);
+		float fm = clamp(inputs[FM_INPUT].value /5.0f * params[FM_PARAM].value /12.0f, -1.0f, 1.0f) * 0x600;
 
-		pitch += 60.0;
+		pitchParam += 60.0;
+		//this is probably not original but seems useful to keep the same frequency as in normal mode
+		if (generator.feature_mode_ == tides::Generator::FEAT_MODE_HARMONIC)
+		    pitchParam -= 12;
+
+		//this is equivalent to bitshifting by 7bits
+		int16_t pitch = (int16_t)(pitchParam * 0x80);
+
+		if (quantize) {
+		    uint16_t semi = pitch >> 7;
+		    uint16_t octaves = semi / 12 ;
+		    semi -= octaves * 12;
+		    pitch = octaves * kOctave + tides::quantize_lut[quantize - 1][semi];
+		}
+
+		// Scale to the global sample rate
+		pitch += log2f(48000.0 / engineGetSampleRate()) * 12.0 * 0x80;
+
 		if (generator.feature_mode_ == tides::Generator::FEAT_MODE_HARMONIC) {
-		    //this is probably not original but seems useful
-		    pitch -= 12;
-		    // Scale to the global sample rate
-		    pitch += log2f(48000.0 / engineGetSampleRate()) * 12.0;
-		    generator.set_pitch_high_range(clampf(pitch * 0x80, -0x8000, 0x7fff), fm);
+		    generator.set_pitch_high_range(clamp(pitch, -0x8000, 0x7fff), fm);
 		}
 		else {
-		    pitch += log2f(48000.0 / engineGetSampleRate()) * 12.0;
-		    generator.set_pitch(clampf(pitch * 0x80, -0x8000, 0x7fff),fm);
+		    generator.set_pitch(clamp(pitch, -0x8000, 0x7fff),fm);
 		}
 
 		if (generator.feature_mode_ == tides::Generator::FEAT_MODE_RANDOM) {
 		    //TODO: should this be inverted?
-		    generator.set_pulse_width(clampf(1.0 - params[FM_PARAM].value /12.0, 0.0, 2.0) * 0x7fff);
+		    generator.set_pulse_width(clamp(1.0 - params[FM_PARAM].value /12.0, 0.0f, 2.0f) * 0x7fff);
 		}
 
 		// Slope, smoothness, pitch
-		int16_t shape = clampf(params[SHAPE_PARAM].value + inputs[SHAPE_INPUT].value / 5.0, -1.0, 1.0) * 0x7fff;
-		int16_t slope = clampf(params[SLOPE_PARAM].value + inputs[SLOPE_INPUT].value / 5.0, -1.0, 1.0) * 0x7fff;
-		int16_t smoothness = clampf(params[SMOOTHNESS_PARAM].value + inputs[SMOOTHNESS_INPUT].value / 5.0, -1.0, 1.0) * 0x7fff;
+		int16_t shape = clamp(params[SHAPE_PARAM].value + inputs[SHAPE_INPUT].value / 5.0f, -1.0f, 1.0f) * 0x7fff;
+		int16_t slope = clamp(params[SLOPE_PARAM].value + inputs[SLOPE_INPUT].value / 5.0f, -1.0f, 1.0f) * 0x7fff;
+		int16_t smoothness = clamp(params[SMOOTHNESS_PARAM].value + inputs[SMOOTHNESS_INPUT].value / 5.0f, -1.0f, 1.0f) * 0x7fff;
 		generator.set_shape(shape);
 		generator.set_slope(slope);
 		generator.set_smoothness(smoothness);
@@ -169,7 +188,7 @@ void Tides::step() {
 	}
 
 	// Level
-	uint16_t level = clampf(inputs[LEVEL_INPUT].normalize(8.0) / 8.0, 0.0, 1.0) * 0xffff;
+	uint16_t level = clamp(inputs[LEVEL_INPUT].normalize(8.0) / 8.0f, 0.0f, 1.0f) * 0xffff;
 	if (level < 32)
 		level = 0;
 
@@ -277,12 +296,23 @@ struct TidesModeItem : MenuItem {
 	Tides *module;
 	tides::Generator::FeatureMode mode;
     	void onAction(EventAction &e) override {
-	  //module->playback = playback;
 	    module->generator.feature_mode_ = mode;
 	}
 	void step() override {
 	  rightText = (module->generator.feature_mode_ == mode) ? "✔" : "";
 		MenuItem::step();
+	}
+};
+
+struct TidesQuantizerItem : MenuItem {
+	Tides *module;
+	uint8_t quantize_;
+    	void onAction(EventAction &e) override {
+	    module->quantize = quantize_;
+	}
+	void step() override {
+	  rightText = (module->quantize == quantize_) ? "✔" : "";
+	  MenuItem::step();
 	}
 };
 
@@ -302,6 +332,17 @@ Menu *TidesWidget::createContextMenu() {
 	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Original", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_FUNCTION));
 	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Harmonic", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_HARMONIC));
 	menu->addChild(construct<TidesModeItem>(&TidesModeItem::text, "Random", &TidesModeItem::module, tides, &TidesModeItem::mode, tides::Generator::FEAT_MODE_RANDOM));
+
+	//Quantizer
+	menu->addChild(construct<MenuLabel>(&MenuLabel::text, "Quantizer"));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "off", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 0));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "Semitones", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 1));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "Ionian", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 2));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "Aeolian", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 3));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "whole Tones", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 4));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "Pentatonic Minor", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 5));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "Pent-3", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 6));
+	menu->addChild(construct<TidesQuantizerItem>(&TidesQuantizerItem::text, "Fifths", &TidesQuantizerItem::module, tides, &TidesQuantizerItem::quantize_, 7));
 	return menu;
 }
 
