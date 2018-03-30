@@ -95,20 +95,20 @@ void Warps::step() {
 	if (++frame >= 60) {
 		frame = 0;
 
-		p->channel_drive[0] = clampf(params[LEVEL1_PARAM].value + inputs[LEVEL1_INPUT].value / 5.0, 0.0, 1.0);
-		p->channel_drive[1] = clampf(params[LEVEL2_PARAM].value + inputs[LEVEL2_INPUT].value / 5.0, 0.0, 1.0);
-		p->modulation_algorithm = clampf(params[ALGORITHM_PARAM].value / 8.0 + inputs[ALGORITHM_INPUT].value / 5.0, 0.0, 1.0);
-		p->raw_level[0] = clampf(params[LEVEL1_PARAM].value, 0.0, 1.0);
-		p->raw_level[1] = clampf(params[LEVEL2_PARAM].value, 0.0, 1.0);
+		p->channel_drive[0] = clamp(params[LEVEL1_PARAM].value + inputs[LEVEL1_INPUT].value / 5.0f, 0.0f, 1.0f);
+		p->channel_drive[1] = clamp(params[LEVEL2_PARAM].value + inputs[LEVEL2_INPUT].value / 5.0f, 0.0f, 1.0f);
+		p->modulation_algorithm = clamp(params[ALGORITHM_PARAM].value / 8.0 + inputs[ALGORITHM_INPUT].value / 5.0f, 0.0f, 1.0f);
+		p->raw_level[0] = clamp(params[LEVEL1_PARAM].value, 0.0f, 1.0f);
+		p->raw_level[1] = clamp(params[LEVEL2_PARAM].value, 0.0f, 1.0f);
 
 		//p->raw_algorithm_pot = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
-		float val = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
+		float val = clamp(params[ALGORITHM_PARAM].value /8.0f, 0.0f, 1.0f);
 		val = stmlib::Interpolate(warps::lut_pot_curve, val, 512.0f);
 		p->raw_algorithm_pot = val;
 
-		p->raw_algorithm_cv = clampf(inputs[ALGORITHM_INPUT].value /5.0, -1.0,1.0);
+		p->raw_algorithm_cv = clamp(inputs[ALGORITHM_INPUT].value /5.0f, -1.0f,1.0f);
 		//According to the cv-scaler this does not seem to use the plot curve
-		p->raw_algorithm = clampf(params[ALGORITHM_PARAM].value /8.0 + inputs[ALGORITHM_INPUT].value /5.0, 0.0, 1.0);
+		p->raw_algorithm = clamp(params[ALGORITHM_PARAM].value /8.0f + inputs[ALGORITHM_INPUT].value /5.0f, 0.0f, 1.0f);
 		{
 			// TODO
 			// Use the correct light color
@@ -118,7 +118,7 @@ void Warps::step() {
 			lights[ALGORITHM_LIGHT + 2].setBrightness(algorithmColor.b);
 		}
 
-		p->modulation_parameter = clampf(params[TIMBRE_PARAM].value + inputs[TIMBRE_INPUT].value / 5.0, 0.0, 1.0);
+		p->modulation_parameter = clamp(params[TIMBRE_PARAM].value + inputs[TIMBRE_INPUT].value / 5.0f, 0.0f, 1.0f);
 
 		// p->frequency_shift_pot = params[ALGORITHM_PARAM].value / 8.0;
 		// p->frequency_shift_cv = clampf(inputs[ALGORITHM_INPUT].value / 5.0, -1.0, 1.0);
@@ -129,8 +129,8 @@ void Warps::step() {
 		modulator.Process(inputFrames, outputFrames, 60);
 	}
 
-	inputFrames[frame].l = clampf(inputs[CARRIER_INPUT].value / 16.0 * 0x8000, -0x8000, 0x7fff);
-	inputFrames[frame].r = clampf(inputs[MODULATOR_INPUT].value / 16.0 * 0x8000, -0x8000, 0x7fff);
+	inputFrames[frame].l = clamp((int) (inputs[CARRIER_INPUT].value / 16.0 * 0x8000), -0x8000, 0x7fff);
+	inputFrames[frame].r = clamp((int) (inputs[MODULATOR_INPUT].value / 16.0 * 0x8000), -0x8000, 0x7fff);
 	outputs[MODULATOR_OUTPUT].value = (float)outputFrames[frame].l / 0x8000 * 5.0;
 	outputs[AUX_OUTPUT].value = (float)outputFrames[frame].r / 0x8000 * 5.0;
 }

@@ -16,7 +16,7 @@ aware of before. I kept the identifiers though so this should not break any save
 ## Wasp and Tapeworm (based on Warps Parasite)
 
 These two modules are based on the Warps Parasite. To fix the multiple-instance problem from older
-versions i took the delay code of the parasites firmware and split it out into it's own module,
+versions i took the delay code of the parasites firmware and split it out into it's own module called
 Tapeworm. Wasp contains all the other modes except for the Doppler Panner which is disabled by
 default. You can enable it by adding "-DDOPPLER_PANNER" to the build flags but you can still
 only use one instance (that is set to Doppler mode).
@@ -24,7 +24,7 @@ only use one instance (that is set to Doppler mode).
 
 ## Cycles (based on Tides Parasite)
 
-There is a known problem when running in harmonics mode. The odd-harmonics (mode switched to green
+There is a known problem when running in harmonics mode. The octaves mode (mode switched to green
 LED) sound very noisy, so for now you probably should not use that. Other than that everything seems
 to work well. The sheep-firmware (wavetable-oscillator) is included but disabled by default. To
 enable it add "-DWAVETABLE_HACK" to your build flags. That will break the Mode-button though so you

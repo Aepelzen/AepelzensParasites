@@ -344,14 +344,14 @@ void Tapeworm::step() {
     if (++frame >= 60) {
 	frame = 0;
 
-	p->modulation_algorithm = clampf(params[ALGORITHM_PARAM].value / 8.0 + inputs[ALGORITHM_INPUT].value / 5.0, 0.0, 1.0);
-	p->raw_level[0] = clampf(params[LEVEL1_PARAM].value, 0.0, 1.0);
-	p->raw_level[1] = clampf(params[LEVEL2_PARAM].value, 0.0, 1.0);
+	p->modulation_algorithm = clamp(params[ALGORITHM_PARAM].value / 8.0f + inputs[ALGORITHM_INPUT].value / 5.0f, 0.0f, 1.0f);
+	p->raw_level[0] = clamp(params[LEVEL1_PARAM].value, 0.0f, 1.0f);
+	p->raw_level[1] = clamp(params[LEVEL2_PARAM].value, 0.0f, 1.0f);
 
 	if(inputs[LEVEL1_INPUT].active)
-	    p->raw_level[0] *= clampf(inputs[LEVEL1_INPUT].value/5.0, 0.0, 1.0);
+	    p->raw_level[0] *= clamp(inputs[LEVEL1_INPUT].value/5.0f, 0.0f, 1.0f);
 	if(inputs[LEVEL2_INPUT].active)
-	    p->raw_level[1] *= clampf(inputs[LEVEL2_INPUT].value/5.0, 0.0, 1.0);
+	    p->raw_level[1] *= clamp(inputs[LEVEL2_INPUT].value/5.0f, 0.0f, 1.0f);
 
 	//p->raw_algorithm_pot = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
 	// float val = clampf(params[ALGORITHM_PARAM].value /8.0, 0.0, 1.0);
@@ -360,7 +360,7 @@ void Tapeworm::step() {
 
 	//p->raw_algorithm_cv = clampf(inputs[ALGORITHM_INPUT].value /5.0, -1.0,1.0);
 	//According to the cv-scaler this does not seem to use the plot curve
-	p->raw_algorithm = clampf(params[ALGORITHM_PARAM].value /8.0 + inputs[ALGORITHM_INPUT].value /5.0, 0.0, 1.0);
+	p->raw_algorithm = clamp(params[ALGORITHM_PARAM].value /8.0f + inputs[ALGORITHM_INPUT].value /5.0f, 0.0f, 1.0f);
 	{
 	    // TODO
 	    // Use the correct light color
@@ -370,12 +370,12 @@ void Tapeworm::step() {
 	    lights[ALGORITHM_LIGHT + 2].setBrightness(algorithmColor.b);
 	}
 
-	p->modulation_parameter = clampf(params[TIMBRE_PARAM].value + inputs[TIMBRE_INPUT].value / 5.0, 0.0, 1.0);
+	p->modulation_parameter = clamp(params[TIMBRE_PARAM].value + inputs[TIMBRE_INPUT].value / 5.0f, 0.0f, 1.0f);
 	ProcessDelay(inputFrames, outputFrames, 60);
     }
 
-    inputFrames[frame].l = clampf(inputs[CARRIER_INPUT].value / 16.0 * 0x8000, -0x8000, 0x7fff);
-    inputFrames[frame].r = clampf(inputs[MODULATOR_INPUT].value / 16.0 * 0x8000, -0x8000, 0x7fff);
+    inputFrames[frame].l = clamp((int) (inputs[CARRIER_INPUT].value / 16.0 * 0x8000), -0x8000, 0x7fff);
+    inputFrames[frame].r = clamp((int) (inputs[MODULATOR_INPUT].value / 16.0 * 0x8000), -0x8000, 0x7fff);
     outputs[MODULATOR_OUTPUT].value = (float)outputFrames[frame].l / 0x8000 * 5.0;
     outputs[AUX_OUTPUT].value = (float)outputFrames[frame].r / 0x8000 * 5.0;
 }
