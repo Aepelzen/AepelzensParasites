@@ -8,10 +8,10 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-// 
+//
 // See http://creativecommons.org/licenses/MIT/ for more information.
 //
 // -----------------------------------------------------------------------------
@@ -86,13 +86,13 @@ void Generator::Init() {
     output_buffer_.Overwrite(s);
     input_buffer_.Overwrite(0);
   }
-  
+
   antialiasing_ = true;
   shape_ = 0;
   slope_ = 0;
   smoothed_slope_ = 0;
   smoothness_ = 0;
-  
+
   previous_sample_.unipolar = previous_sample_.bipolar = 0;
   running_ = wrap_ = false;
   previous_freeze_ = false;
@@ -106,7 +106,7 @@ void Generator::Init() {
   delay_ = 0;
 
   ClearFilterState();
-  
+
   sync_counter_ = kSyncCounterMaxTime;
   frequency_ratio_.p = 1;
   frequency_ratio_.q = 1;
@@ -171,11 +171,11 @@ int16_t Generator::ComputePitch(int32_t phase_increment) {
   int32_t first = lut_increments[0];
   int32_t last = lut_increments[LUT_INCREMENTS_SIZE - 2];
   int16_t pitch = 0;
-  
+
   if (phase_increment == 0) {
     phase_increment = 1;
   }
-  
+
   phase_increment /= clock_divider_;
   while (phase_increment > last) {
     phase_increment >>= 1;
@@ -289,7 +289,7 @@ void Generator::FillBuffer() {
 // - Due to rounding errors, the duration of the A+D segment is not preserved
 //   exactly when the slope is modulated.
 // - No anti-aliasing.
-// 
+//
 // 3. Generate a ramp and waveshape it (phase distortion).
 //
 // + Duration of A+D segment is preserved.
@@ -297,7 +297,7 @@ void Generator::FillBuffer() {
 // - No anti-aliasing.
 // - Slope modulations causes waveform discontinuities.
 //
-// 
+//
 // We use 1. for the highest range (audio rates); and 3 for the two other ranges
 // (control rates extending into audio territory). To compensate for the slope
 // modulation discontinuities, we low-pass filter digitally the slope value.
@@ -306,7 +306,7 @@ void Generator::FillBuffer() {
 
 void Generator::FillBufferAudioRate() {
   uint8_t size = kBlockSize;
-  
+
   GeneratorSample sample = previous_sample_;
   int32_t phase_increment_end;
 
@@ -330,7 +330,7 @@ void Generator::FillBufferAudioRate() {
     index = 0;
     xfade = 0;
   }
-  
+
   const int16_t* wave_1 = waveform_table[WAV_BANDLIMITED_PARABOLA_0 + index];
   const int16_t* wave_2 = waveform_table[WAV_BANDLIMITED_PARABOLA_0 + index + 1];
 
@@ -349,12 +349,12 @@ void Generator::FillBufferAudioRate() {
   int32_t gain = slope;
   gain = (32768 - (gain * gain >> 15)) * 3 >> 1;
   gain = 32768 * 1024 / gain;
-  
+
   uint32_t phase_offset_a_bi = (slope - (slope >> 1)) << 16;
   uint32_t phase_offset_b_bi = (32768 - (slope >> 1)) << 16;
   uint32_t phase_offset_a_uni = 49152 << 16;
   uint32_t phase_offset_b_uni = (32768 + 49152 - slope) << 16;
-  
+
   int32_t attenuation = 32767;
   if (antialiasing_) {
     attenuation = ComputeAntialiasAttenuation(
@@ -381,10 +381,10 @@ void Generator::FillBufferAudioRate() {
     wf_gain += attenuated_smoothness * (32767 - 1024) >> 14;
     wf_balance = attenuated_smoothness;
   }
-#endif  // CORE_ONLY  
-  
+#endif  // CORE_ONLY
+
   uint32_t end_of_attack = (static_cast<uint32_t>(slope + 32768) << 16);
-  
+
   // Load state into registers - saves some memory load/store inside the
   // rendering loop.
   uint32_t phase = phase_;
@@ -395,7 +395,7 @@ void Generator::FillBufferAudioRate() {
   int32_t uni_lp_state_1 = uni_lp_state_[1];
   int32_t bi_lp_state_0 = bi_lp_state_[0];
   int32_t bi_lp_state_1 = bi_lp_state_[1];
-  
+
   // Enforce that the EOA pulse is at least 1 sample wide.
   if (end_of_attack >= abs(phase_increment)) {
     end_of_attack -= phase_increment;
@@ -433,7 +433,7 @@ void Generator::FillBufferAudioRate() {
       }
       previous_clock_ = control & CONTROL_CLOCK;
     }
-    
+
     if (sync_) {
       if (control & CONTROL_CLOCK_RISING) {
         ++sync_edges_counter_;
@@ -455,18 +455,18 @@ void Generator::FillBufferAudioRate() {
       local_osc_phase_increment_ += static_cast<int32_t>(
           target_phase_increment_ - local_osc_phase_increment_) >> 8;
       local_osc_phase_ += local_osc_phase_increment_;
-      
+
       // Slow phase realignment between the master oscillator and the local
       // oscillator.
       int32_t phase_error = local_osc_phase_ - phase;
       phase_increment = local_osc_phase_increment_ + (phase_error >> 13);
     }
-    
+
     if (control & CONTROL_FREEZE) {
       output_buffer_.Overwrite(sample);
       continue;
     }
-    
+
     bool sustained = mode_ == GENERATOR_MODE_AR
         && phase >= (1UL << 31)
         && control & CONTROL_GATE;
@@ -495,7 +495,7 @@ void Generator::FillBufferAudioRate() {
     ramp_b = Crossfade1022(wave_1, wave_2, compressed_phase + phase_offset_b_bi, xfade);
     saw = (ramp_b - ramp_a) * gain >> 10;
     CLIP(saw);
-    
+
     // Appy shape waveshaper.
     saw = Crossfade115(shape_1, shape_2, saw + 32768, shape_xfade);
     if (!running_ && !sustained) {
@@ -505,7 +505,7 @@ void Generator::FillBufferAudioRate() {
     // Run through LPF.
     bi_lp_state_0 += f * (saw - bi_lp_state_0) >> 15;
     bi_lp_state_1 += f * (bi_lp_state_0 - bi_lp_state_1) >> 15;
-    
+
     // Fold.
     original = bi_lp_state_1;
     folded = Interpolate1022(wav_bipolar_fold, original * wf_gain + (1UL << 31));
@@ -517,7 +517,7 @@ void Generator::FillBufferAudioRate() {
     ramp_b = Crossfade1022(wave_1, wave_2, compressed_phase + phase_offset_b_uni, xfade);
     saw = (ramp_b - ramp_a) * gain >> 10;
     CLIP(saw)
-    
+
     // Appy shape waveshaper.
     saw = Crossfade115(shape_1, shape_2, (saw >> 1) + 32768 + 16384,
                        shape_xfade);
@@ -528,7 +528,7 @@ void Generator::FillBufferAudioRate() {
     // Run through LPF.
     uni_lp_state_0 += f * (saw - uni_lp_state_0) >> 15;
     uni_lp_state_1 += f * (uni_lp_state_0 - uni_lp_state_1) >> 15;
-    
+
     // Fold.
     original = uni_lp_state_1 << 1;
     folded = Interpolate1022(wav_unipolar_fold, original * wf_gain) << 1;
@@ -538,7 +538,7 @@ void Generator::FillBufferAudioRate() {
     sample.bipolar = (phase >> 16) - 32768;
     sample.unipolar = phase >> 16;
 #endif  // CORE_ONLY
-    
+
     sample.flags = 0;
 
     if (compressed_phase >= end_of_attack || !running_) {
@@ -550,7 +550,7 @@ void Generator::FillBufferAudioRate() {
       sample.flags |= FLAG_END_OF_RELEASE;
     }
     output_buffer_.Overwrite(sample);
-    
+
     if (running_ && !sustained) {
       phase += phase_increment;
       sub_phase_ += phase_increment >> 1;
@@ -565,7 +565,7 @@ void Generator::FillBufferAudioRate() {
   uni_lp_state_[1] = uni_lp_state_1;
   bi_lp_state_[0] = bi_lp_state_0;
   bi_lp_state_[1] = bi_lp_state_1;
-  
+
   previous_sample_ = sample;
   phase_ = phase;
   phase_increment_ = phase_increment;
@@ -574,7 +574,7 @@ void Generator::FillBufferAudioRate() {
 
 void Generator::FillBufferControlRate() {
   uint8_t size = kBlockSize;
-  
+
   if (sync_) {
     pitch_ = ComputePitch(phase_increment_);
   } else {
@@ -582,17 +582,17 @@ void Generator::FillBufferControlRate() {
     local_osc_phase_increment_ = phase_increment_;
     target_phase_increment_ = phase_increment_;
   }
-  
+
   GeneratorSample sample = previous_sample_;
 
-#ifndef CORE_ONLY  
+#ifndef CORE_ONLY
   uint16_t shape = static_cast<uint16_t>(shape_ + 32768);
   shape = (shape >> 2) * 3;
   uint16_t wave_index = WAV_REVERSED_CONTROL + (shape >> 13);
   const int16_t* shape_1 = waveform_table[wave_index];
   const int16_t* shape_2 = waveform_table[wave_index + 1];
   uint16_t shape_xfade = shape << 3;
-  
+
   int64_t frequency = ComputeCutoffFrequency(pitch_, smoothness_);
   int64_t f_a = lut_cutoff[frequency >> 7];
   int64_t f_b = lut_cutoff[(frequency >> 7) + 1];
@@ -603,7 +603,7 @@ void Generator::FillBufferControlRate() {
     wf_gain += smoothness_ * (32767 - 1024) >> 14;
     wf_balance = smoothness_;
   }
-#endif  // CORE_ONLY  
+#endif  // CORE_ONLY
 
   // Load state into registers - saves some memory load/store inside the
   // rendering loop.
@@ -619,12 +619,12 @@ void Generator::FillBufferControlRate() {
   uint32_t end_of_attack = 1UL << 31;
   uint32_t attack_factor = 1 << kSlopeBits;
   uint32_t decay_factor = 1 << kSlopeBits;
-  
+
   while (size--) {
     sync_counter_++;
     // Low-pass filter the slope parameter.
     smoothed_slope += (slope_ - smoothed_slope) >> 4;
-    
+
     uint8_t control = input_buffer_.ImmediateRead();
 
     // When freeze is high, discard any start/reset command.
@@ -637,7 +637,7 @@ void Generator::FillBufferControlRate() {
         phase = 0;
       }
     }
-    
+
     if ((control & CONTROL_CLOCK_RISING) && sync_ && sync_counter_) {
       if (sync_counter_ >= kSyncCounterMaxTime) {
         phase = 0;
@@ -657,7 +657,7 @@ void Generator::FillBufferControlRate() {
       output_buffer_.Overwrite(sample);
       continue;
     }
-    
+
     // Recompute the waveshaping parameters only when the slope has changed.
     if (smoothed_slope != previous_smoothed_slope) {
        uint32_t slope_offset = Interpolate88(
@@ -672,7 +672,7 @@ void Generator::FillBufferControlRate() {
       previous_smoothed_slope = smoothed_slope;
       end_of_attack = slope_offset << 16;
     }
-    
+
     uint32_t skewed_phase = phase;
     if (phase <= end_of_attack) {
       skewed_phase = (phase >> kSlopeBits) * decay_factor;
@@ -690,7 +690,7 @@ void Generator::FillBufferControlRate() {
       phase = end_of_attack + 1;
     }
 
-#ifndef CORE_ONLY  
+#ifndef CORE_ONLY
     int32_t original, folded;
     int32_t unipolar = Crossfade106(
         shape_1,
@@ -698,11 +698,11 @@ void Generator::FillBufferControlRate() {
         skewed_phase >> 16, shape_xfade);
     uni_lp_state_0 += f * ((unipolar << 16) - uni_lp_state_0) >> 31;
     uni_lp_state_1 += f * (uni_lp_state_0 - uni_lp_state_1) >> 31;
-    
+
     original = uni_lp_state_1 >> 15;
     folded = Interpolate1022(wav_unipolar_fold, original * wf_gain) << 1;
     sample.unipolar = original + ((folded - original) * wf_balance >> 15);
-    
+
     int32_t bipolar = Crossfade106(
         shape_1,
         shape_2,
@@ -710,15 +710,15 @@ void Generator::FillBufferControlRate() {
     if (skewed_phase >= (1UL << 31)) {
       bipolar = -bipolar;
     }
-    
+
     bi_lp_state_0 += f * ((bipolar << 16) - bi_lp_state_0) >> 31;
     bi_lp_state_1 += f * (bi_lp_state_0 - bi_lp_state_1) >> 31;
-    
+
     original = bi_lp_state_1 >> 16;
     folded = Interpolate1022(wav_bipolar_fold, original * wf_gain + (1UL << 31));
     sample.bipolar = original + ((folded - original) * wf_balance >> 15);
 
-#else    
+#else
     sample.bipolar = (skewed_phase >> 16) - 32768;
     sample.unipolar = skewed_phase >> 16;
 #endif  // CORE_ONLY
@@ -752,7 +752,7 @@ void Generator::FillBufferControlRate() {
     if ((sustained || end_of_attack == 0) && (triggered || looped)) {
       sample.flags &= ~FLAG_END_OF_ATTACK;
     }
-    
+
     output_buffer_.Overwrite(sample);
     if (running_ && !sustained) {
       phase += phase_increment;
@@ -766,7 +766,7 @@ void Generator::FillBufferControlRate() {
   uni_lp_state_[1] = uni_lp_state_1;
   bi_lp_state_[0] = bi_lp_state_0;
   bi_lp_state_[1] = bi_lp_state_1;
-  
+
   previous_sample_ = sample;
   phase_ = phase;
   phase_increment_ = phase_increment;
@@ -777,7 +777,7 @@ void Generator::FillBufferControlRate() {
 
 void Generator::FillBufferWavetable() {
   uint8_t size = kBlockSize;
-  
+
   GeneratorSample sample = previous_sample_;
   if (sync_) {
     pitch_ = ComputePitch(phase_increment_);
@@ -788,7 +788,7 @@ void Generator::FillBufferWavetable() {
   uint32_t phase = phase_;
   uint32_t sub_phase = sub_phase_;
   uint32_t phase_increment = phase_increment_;
-  
+
   // The grid is only 8x8 rather than 9x9 so we need to scale by 7/8.0
   uint16_t target_x = static_cast<uint16_t>(slope_ + 32768);
   target_x = target_x * 57344 >> 16;
@@ -802,19 +802,19 @@ void Generator::FillBufferWavetable() {
 
   int32_t wf_gain = smoothness_ > 0 ? smoothness_ : 0;
   wf_gain = wf_gain * wf_gain >> 15;
-  
+
   int32_t frequency = ComputeCutoffFrequency(pitch_, smoothness_);
   int32_t f_a = lut_cutoff[frequency >> 7] >> 16;
   int32_t f_b = lut_cutoff[(frequency >> 7) + 1] >> 16;
   int32_t f = f_a + ((f_b - f_a) * (frequency & 0x7f) >> 7);
   int32_t lp_state_0 = bi_lp_state_[0];
   int32_t lp_state_1 = bi_lp_state_[1];
-  
+
   const int16_t* bank = wt_waves + mode_ * 64 * 257 - (mode_ & 2) * 4 * 257;
   while (size--) {
     ++sync_counter_;
     uint8_t control = input_buffer_.ImmediateRead();
-    
+
     // When freeze is high, discard any start/reset command.
     if (!(control & CONTROL_FREEZE)) {
       if (control & CONTROL_GATE_RISING) {
@@ -822,7 +822,7 @@ void Generator::FillBufferWavetable() {
         sub_phase = 0;
       }
     }
-    
+
     if (control & CONTROL_CLOCK_RISING) {
       if (sync_) {
         if (range_ == GENERATOR_RANGE_HIGH) {
@@ -866,28 +866,28 @@ void Generator::FillBufferWavetable() {
         bank = wt_waves + mode_ * 64 * 257 - (mode_ & 2) * 4 * 257;
       }
     }
-    
+
     // PLL stuff
     if (sync_ && range_ == GENERATOR_RANGE_HIGH) {
       // Fast tracking of the local oscillator to the external oscillator.
       local_osc_phase_increment_ += static_cast<int32_t>(
           target_phase_increment_ - local_osc_phase_increment_) >> 8;
       local_osc_phase_ += local_osc_phase_increment_;
-    
+
       // Slow phase realignment between the master oscillator and the local
       // oscillator.
       int32_t phase_error = local_osc_phase_ - phase;
       phase_increment = local_osc_phase_increment_ + (phase_error >> 13);
     }
-    
+
     x += x_increment;
     y += y_increment;
-  
+
     if (control & CONTROL_FREEZE) {
       output_buffer_.Overwrite(sample);
       continue;
     }
-    
+
     uint16_t x_integral = x >> 13;
     uint16_t y_integral = y >> 13;
     const int16_t* wave_1 = &bank[(x_integral + y_integral * 8) * 257];
@@ -906,10 +906,10 @@ void Generator::FillBufferWavetable() {
       s += y_mix * kDownsampleCoefficient[subsample];
       phase += (phase_increment >> 2);
     }
-    
+
     lp_state_0 += f * ((s >> 16) - lp_state_0) >> 15;
     lp_state_1 += f * (lp_state_0 - lp_state_1) >> 15;
-    
+
     sample.bipolar = lp_state_1;
     sample.unipolar = sample.bipolar + 32768;
     sample.flags = 0;
@@ -945,11 +945,11 @@ uint16_t ComputePeak(uint16_t center, uint16_t width, uint16_t x) {
   return peak;
 }
 
-template<GeneratorMode mode>
+template<GeneratorMode gmode>
 void Generator::FillBufferHarmonic() {
 
   uint8_t size = kBlockSize;
-  
+
   uint16_t width = static_cast<uint16_t>(smoothness_ << 1);
   width = (width * width) >> 16;
 
@@ -975,7 +975,7 @@ void Generator::FillBufferHarmonic() {
 
   // pre-compute spectral envelope
   for (uint8_t harm=0; harm<kNumHarmonics; harm++) {
-    uint16_t x = mode == GENERATOR_MODE_AR ?
+    uint16_t x = gmode == GENERATOR_MODE_AR ?
       (harm << 16) / kNumHarmonicsPowers :
       (harm << 16) / kNumHarmonics;
 
@@ -996,8 +996,8 @@ void Generator::FillBufferHarmonic() {
 
     uint32_t pi = abs(phase_increment_end) >> 16;
     pi =
-      mode == GENERATOR_MODE_AR ? pi << harm :
-      mode == GENERATOR_MODE_LOOPING ? pi * (harm + 1) :
+      gmode == GENERATOR_MODE_AR ? pi << harm :
+      gmode == GENERATOR_MODE_LOOPING ? pi * (harm + 1) :
       // mode == GENERATOR_MODE_AD ?
       pi * ((harm << 1) + 1);
 
@@ -1061,7 +1061,7 @@ void Generator::FillBufferHarmonic() {
       local_osc_phase_increment_ += static_cast<int32_t>(
         target_phase_increment_ - local_osc_phase_increment_) >> 5;
       local_osc_phase_ += local_osc_phase_increment_;
-      
+
       // Slow phase realignment between the master oscillator and the local
       // oscillator.
       int32_t phase_error = local_osc_phase_ - phase_;
@@ -1090,13 +1090,13 @@ void Generator::FillBufferHarmonic() {
       unipolar += (((tn * envelope_[harm_permut_[harm]]) >> 16) * antialias[harm]) >> 16;
 
       int32_t t = tn;
-      if (mode == GENERATOR_MODE_AR) { // power of two harmonics
+      if (gmode == GENERATOR_MODE_AR) { // power of two harmonics
         if (harm == kNumHarmonicsPowers) break;
         if ((harm & 3) == 0)
           tn = Interpolate1121(wav_sine1024, phase_ << harm);
         else
           tn = 2 * ((tn * tn) >> 15) - 32768;
-      } else if (mode == GENERATOR_MODE_AD) { // odd harmonics
+      } else if (gmode == GENERATOR_MODE_AD) { // odd harmonics
         tn = ((sine * tn) >> 14) - tn1;
         tn1 = t;
         t = tn;
@@ -1209,7 +1209,7 @@ void Generator::RandomizeDivider() {
 void Generator::FillBufferRandom() {
 
   uint8_t size = kBlockSize;
-  
+
   if (sync_) {
     pitch_ = ComputePitch(phase_increment_);
   } else {
@@ -1266,7 +1266,7 @@ void Generator::FillBufferRandom() {
       }
       sync_counter_ = 0;
     }
-    
+
     // on significant slope or pitch variation
     if (phase_ < abs(phase_increment_) &&
 	(abs(slope_ - old_slope_) > 4096 ||
